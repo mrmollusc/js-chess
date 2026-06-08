@@ -15,6 +15,6 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 
 
-#LINKS
+# LINKS
 
 js chess tutorial -  https://www.youtube.com/watch?v=Qv0fvm5B0EM
