@@ -3,7 +3,11 @@ const player_turn = document.querySelector('#player_turn');
 const info = document.querySelector('#info'); 
 var start_pos_id; //id of piece dragged
 var dragged_element;
+var turn = 'white';
+var opp_taken;
+player_turn.textContent = 'white';
 //pieces
+
 
 //white
 const w_king = '<div class="piece" id="king"><img src="wk.png"></div>';
@@ -31,6 +35,10 @@ const start_board = [
     w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn,
     w_rook, w_knight, w_bishop, w_queen, w_king, w_bishop, w_knight, w_rook
 ]
+
+function delay(ms){ //delAy
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 function create_board() {
     start_board.forEach((index, i) => {
@@ -71,8 +79,8 @@ all_squares.forEach(square => {//listens for dragging events
 })
 
 function drag_start(e){ //measures where you dragged from
-    start_pos_id = e.target.parentNode.getAttribute('square_id');
-    dragged_element = e.target;
+    start_pos_id = e.currentTarget.getAttribute('square_id'); // fix for vid
+    dragged_element = e.target.parentNode;
 }
 
 function drag_over(e){// uh idk
@@ -80,6 +88,90 @@ function drag_over(e){// uh idk
 }
 
 function drag_drop(e){//detects drop of drag...
-    e.stopPropagation();    
-    e.target.append(dragged_element);
+    e.stopPropagation();  
+    const your_turn = dragged_element.firstChild.classList.contains(turn);
+    const your_taken = e.target.classList.contains('.piece');
+    const opp_turn = turn === 'white' ? 'black' : 'white';
+    opp_taken = e.target.classList.contains(opp_turn);
+    const valid = check_valid(e.target)
+
+    if(your_turn && valid){
+        if(opp_taken /*&& valid*/){ //if regular capture
+            e.target.remove();
+            e.target.parentNode.append(dragged_element); //stick piece to new square and get rid of old one
+            change_turn();
+            return;
+        }
+        e.target.append(dragged_element); 
+        change_turn();
+        return;
+        }
 }
+
+function change_turn(){ //changes turn no sh       utdown
+    if(turn === 'black'){
+        turn = 'white';
+        player_turn.textContent = 'white';
+        change_ids();
+    }
+    else{
+        turn = 'black';
+        player_turn.textContent = 'black';
+        revert_ids();
+    }
+    
+}
+function change_ids(){//um the tutorial said so, id's from white = 0 for piece movement: supposedly
+    const all_squares = document.querySelectorAll('.square')
+    all_squares.forEach((square, i) => square.setAttribute('square_id', (63-i))
+    )
+}
+function revert_ids(){//yeah seems useful
+    const all_squares = document.querySelectorAll('.square')
+    all_squares.forEach((square, i) => square.setAttribute('square_id', (i)) 
+    )   
+}
+
+function check_valid(target){// can you play that?
+    const target_square = event.target.closest('.square');
+    const target_id = target_square ? Number(target_square.getAttribute('square_id')) : null;
+    const start_id = Number(start_pos_id);
+    const piece = dragged_element.id;
+    const can_drop = !target_square.firstChild || opp_taken; //no more friendly fire haah
+    //all the legal moves go here
+    switch(piece){
+        case 'pawn':
+            const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
+
+            const one_step = start_id + 8 === target_id && !document.querySelector(`[square_id="${start_id + 8}"]`).firstChild;
+            const two_step = pawn_start_row.includes(start_id) && start_id + 16 === target_id && !document.querySelector(`[square_id="${start_id + 8}"]`).firstChild && !document.querySelector(`[square_id="${start_id + 16}"]`).firstChild;
+            const capture_right = start_id + 7 === target_id && document.querySelector(`[square_id="${start_id + 7}"]`).firstChild && start_id % 8 != 0 && can_drop;
+            const capture_left = start_id + 9 === target_id && document.querySelector(`[square_id="${start_id + 9}"]`).firstChild && start_id % 8 != 7 && can_drop;
+
+            if(one_step || two_step || capture_left || capture_right){
+                console.log(start_id,'-->', target_id, piece);
+                return true;
+            }
+        break;
+        case 'knight': //the dum yt tutorial doesn't account for EDGE wrap ugh
+            const start_column = start_id % 8; // ALL THE MANUAL CASES SOB
+            const target_column = target_id % 8;
+            const col_diff = target_column - start_column;
+            const row_diff = target_id - start_id;
+
+            const up2_right1 = (row_diff === 17) && (col_diff === 1);
+            const p2_left1 = (row_diff === 15) && (col_diff === -1);
+            const up1_right2 = (row_diff === 10) && (col_diff === 2);
+            const up1_left2 = (row_diff === 6) && (col_diff === -2);
+            const down2_left1 = (row_diff === -17) && (col_diff === -1);
+            const down2_right1 = (row_diff === -15) && (col_diff === 1);
+            const down1_left2 = (row_diff === -10) && (col_diff === -2);
+            const down1_right2 = (row_diff === -6) && (col_diff === 2);
+
+            if(can_drop && (up2_right1 || p2_left1 || up1_right2 || up1_left2 || down2_left1 || down2_right1 || down1_left2 || down1_right2)){
+                console.log(start_id,'-->', target_id, piece);
+                return true;
+            }
+    }
+}
+change_ids()

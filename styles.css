@@ -5,9 +5,22 @@
     display: flex;
     flex-wrap: wrap;
 }
+#info{
+    color: black;
+    position: absolute;
+    top: 1225px;
+    left: 346px;
+}
 .square{
     height: 150px;
     width: 150px;
+    user-select: none; 
+}
+.square img{
+    height: 150px;
+    width: 150px;
+    position: relative;
+    z-index: -1;
 }
 .piece{
     position: relative;
