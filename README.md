@@ -5,7 +5,9 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 8/06 - Forces only legal moves, currently the pawn and knight, diverging from the tutorial to think about ADDING FUNCTIONALITY such as en passant, castling, array issues etc.
 
+10/06 - After giving up on rook slider, added king movement (quite easy imo)
 
+12/06 - FIRST SLIDING PIECE DONE WITH 4 FOR LOOPS HELP (bishop), working on rook now
 
 
 
@@ -18,3 +20,7 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 # LINKS
 
 js chess tutorial -  https://www.youtube.com/watch?v=Qv0fvm5B0EM
+
+cracked cpp user: @irekit
+
+cracked python user: @vincentchen18
