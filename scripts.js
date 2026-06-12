@@ -72,10 +72,13 @@ create_board();
 
 const all_squares = document.querySelectorAll("#chess_board .square");
 
-all_squares.forEach(square => {//listens for dragging events
+all_squares.forEach((square, i) => {//listens for dragging events
     square.addEventListener('dragstart', drag_start);
     square.addEventListener('dragover', drag_over);
     square.addEventListener('drop', drag_drop);
+    if(square.children.length==2){
+        all_squares[i].innerHTML='';
+    }
 })
 
 function drag_start(e){ //measures where you dragged from
@@ -90,18 +93,21 @@ function drag_over(e){// uh idk
 function drag_drop(e){//detects drop of drag...
     e.stopPropagation();  
     const your_turn = dragged_element.firstChild.classList.contains(turn);
-    const your_taken = e.target.classList.contains('.piece');
     const opp_turn = turn === 'white' ? 'black' : 'white';
     opp_taken = e.target.classList.contains(opp_turn);
     const valid = check_valid(e.target)
 
     if(your_turn && valid){
-        if(opp_taken /*&& valid*/){ //if regular capture
-            e.target.remove();
-            e.target.parentNode.append(dragged_element); //stick piece to new square and get rid of old one
+
+        if(opp_taken){ //if regular capture
+            e.target.parentNode.append(dragged_element);
+            e.target.remove(); //kept leaving ghost pieces with no img child, this is the fix
+            document.querySelectorAll('.piece:not(:has(img))').forEach(piece => piece.remove()); 
             change_turn();
+                console.log(dragged_element.id)
             return;
         }
+
         e.target.append(dragged_element); 
         change_turn();
         return;
@@ -138,8 +144,16 @@ function check_valid(target){// can you play that?
     const start_id = Number(start_pos_id);
     const piece = dragged_element.id;
     const can_drop = !target_square.firstChild || opp_taken; //no more friendly fire haah
+    const start_column = start_id % 8; // ALL THE MANUAL CASES SOB
+    const target_column = target_id % 8;
+    const col_diff = target_column - start_column;
+    const row_diff = target_id - start_id;   
+
+    
     //all the legal moves go here
+
     switch(piece){
+        
         case 'pawn':
             const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
 
@@ -149,15 +163,10 @@ function check_valid(target){// can you play that?
             const capture_left = start_id + 9 === target_id && document.querySelector(`[square_id="${start_id + 9}"]`).firstChild && start_id % 8 != 7 && can_drop;
 
             if(one_step || two_step || capture_left || capture_right){
-                console.log(start_id,'-->', target_id, piece);
                 return true;
             }
         break;
         case 'knight': //the dum yt tutorial doesn't account for EDGE wrap ugh
-            const start_column = start_id % 8; // ALL THE MANUAL CASES SOB
-            const target_column = target_id % 8;
-            const col_diff = target_column - start_column;
-            const row_diff = target_id - start_id;
 
             const up2_right1 = (row_diff === 17) && (col_diff === 1);
             const p2_left1 = (row_diff === 15) && (col_diff === -1);
@@ -169,9 +178,47 @@ function check_valid(target){// can you play that?
             const down1_right2 = (row_diff === -6) && (col_diff === 2);
 
             if(can_drop && (up2_right1 || p2_left1 || up1_right2 || up1_left2 || down2_left1 || down2_right1 || down1_left2 || down1_right2)){
-                console.log(start_id,'-->', target_id, piece);
+                return true;
+            }
+        case 'king': //bruh bruh bruh
+            const up = (row_diff === 8) && (col_diff === 0);
+            const down = (row_diff === -8) && (col_diff === 0);
+            const left = (row_diff === 1) && (col_diff === 1);
+            const right = (row_diff === -1) && (col_diff === -1);
+            const up_left = (row_diff === 9) && (col_diff === 1);
+            const down_left = (row_diff === -7) && (col_diff === 1);
+            const up_right = (row_diff === -9) && (col_diff === -1);
+            const down_right = (row_diff === 7) && (col_diff === -1);
+            if(can_drop && (up || down || left || right || up_left || up_right || down_left || down_right)){
+                return true;
+            }
+        case 'bishop':
+            var bishop_moves = []; //@irekit said to store the board as a 2d array for speed and legal moving uh idk
+            function bishop(){ //folded it up, preventing readability oops
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 <= start_id % 8){break;}
+                    if(start_id+9*i>63){break;}
+                    if(document.querySelector(`[square_id="${start_id+9*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+9*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id+9*i);break;}bishop_moves.push(start_id+9*i);console.log(bishop_moves);}
+                
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 >= start_id % 8){break;}
+                    if(start_id-9*i<0){break;}
+                    if(document.querySelector(`[square_id="${start_id-9*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-9*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id-9*i);break;}bishop_moves.push(start_id-9*i);console.log(bishop_moves);  }
+                   
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 <= start_id % 8){break;}
+                    if(start_id-7*i<0){break;}
+                    if(document.querySelector(`[square_id="${start_id-7*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-7*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id-7*i);break;}bishop_moves.push(start_id-7*i);console.log(bishop_moves);  }
+                
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 >= start_id % 8){break;}
+                    if(start_id+7*i>63){break;}
+                    if(document.querySelector(`[square_id="${start_id+7*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+7*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id+7*i);break;}bishop_moves.push(start_id+7*i);console.log(bishop_moves);  }
+            }
+            bishop(); //i think this is the best way, if (includes) will probably useful for a legal move definer (checks) 
+            if(bishop_moves.includes(target_id)){
                 return true;
             }
     }
-}
-change_ids()
+        }
+change_ids();
