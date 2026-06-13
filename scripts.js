@@ -219,6 +219,31 @@ function check_valid(target){// can you play that?
             if(bishop_moves.includes(target_id)){
                 return true;
             }
+        case 'rook':
+            var rook_moves = [];
+            function rook(){
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 != start_id % 8){break;}
+                    if(start_id+8*i>63){break;}
+                    if(document.querySelector(`[square_id="${start_id+8*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+8*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id+8*i);break;}rook_moves.push(start_id+8*i);console.log(rook_moves);}
+                
+                for(let i = 1;i<7;i++){
+                    if(target_id % 8 != start_id % 8){break;}
+                    if(start_id-8*i<0){break;}
+                    if(document.querySelector(`[square_id="${start_id-8*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-8*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id-8*i);break;}rook_moves.push(start_id-8*i);console.log(rook_moves);}
+            
+                for(let i = 1;i<7;i++){
+                    if(Math.floor(start_id/8)!=Math.floor(target_id/8)){break;}
+                    if(document.querySelector(`[square_id="${start_id+i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id+i);break;}rook_moves.push(start_id+i);console.log(rook_moves);}
+                
+                for(let i = 1;i<7;i++){
+                    if(Math.floor(start_id/8)!=Math.floor(target_id/8)){break;}
+                    if(document.querySelector(`[square_id="${start_id-i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id-i);break;}rook_moves.push(start_id-i);console.log(rook_moves);}
+            }
+            rook(); //same logic as bishop
+            if(rook_moves.includes(target_id)){
+                return true;
+            }
     }
         }
 change_ids();

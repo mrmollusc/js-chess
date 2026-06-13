@@ -1,6 +1,6 @@
 #chess_board{
-    width: 1200px;
-    height: 1200px;
+    width: 800px;
+    height: 800px;
     background-color: rgb(0,0,0);
     display: flex;
     flex-wrap: wrap;
@@ -12,13 +12,13 @@
     left: 346px;
 }
 .square{
-    height: 150px;
-    width: 150px;
+    height: 100px;
+    width: 100px;
     user-select: none; 
 }
 .square img{
-    height: 150px;
-    width: 150px;
+    height: 100px;
+    width: 100px;
     position: relative;
     z-index: -1;
 }
@@ -31,4 +31,10 @@
 } 
 .navy{
     background-color: rgb(0, 0, 67);
+}
+#turn{
+    position: absolute;
+    font: 125px 'Mozilla Text';
+    left: 1250px;
+    top: 125px;
 }
