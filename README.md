@@ -9,6 +9,7 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 12/06 - FIRST SLIDING PIECE DONE WITH 4 FOR LOOPS HELP (bishop), working on rook now
 
+13/06 - Rook movement implemented, will soon work on legal moves
 
 
 
