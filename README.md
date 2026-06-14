@@ -11,6 +11,8 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 13/06 - Rook movement implemented, will soon work on legal moves
 
+14/06 - Slider pieces reworked, preparing to work on legal moves (still)
+
 
 
 
