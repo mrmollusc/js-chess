@@ -181,69 +181,183 @@ function check_valid(target){// can you play that?
                 return true;
             }
         case 'king': //bruh bruh bruh
-            const up = (row_diff === 8) && (col_diff === 0);
-            const down = (row_diff === -8) && (col_diff === 0);
-            const left = (row_diff === 1) && (col_diff === 1);
-            const right = (row_diff === -1) && (col_diff === -1);
-            const up_left = (row_diff === 9) && (col_diff === 1);
-            const down_left = (row_diff === -7) && (col_diff === 1);
-            const up_right = (row_diff === -9) && (col_diff === -1);
-            const down_right = (row_diff === 7) && (col_diff === -1);
-            if(can_drop && (up || down || left || right || up_left || up_right || down_left || down_right)){
+            var king_moves = [];
+            function get_king_moves() {
+                const directions = [
+                    { offset: 8,  type: 'v'  },
+                    { offset: -8, type: 'v'  },
+                    { offset: 1,  type: 'h'  },
+                    { offset: -1, type: 'h'  },
+                    { offset: 9,  type: 'dr' },
+                    { offset: 7,  type: 'dl' },
+                    { offset: -7, type: 'ur' },
+                    { offset: -9, type: 'ul' } 
+                ];
+
+                directions.forEach(dir => {
+                    for (let i = 1; i < 2; i++) { 
+                        let legal_id = start_id + dir.offset * i;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
+                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
+                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
+
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+                        if (!square) break;
+
+                        const pieceOnSquare = square.querySelector('.piece');
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            king_moves.push(legal_id);
+                            break;
+                        }
+                        king_moves.push(legal_id);
+                    }
+                });
+            }
+
+            get_king_moves();
+            console.log("king ",king_moves);
+            if (king_moves.includes(target_id)) {
                 return true;
             }
+            return false;
+
         case 'bishop':
-            var bishop_moves = []; //@irekit said to store the board as a 2d array for speed and legal moving uh idk
-            function bishop(){ //folded it up, preventing readability oops
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 <= start_id % 8){break;}
-                    if(start_id+9*i>63){break;}
-                    if(document.querySelector(`[square_id="${start_id+9*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+9*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id+9*i);break;}bishop_moves.push(start_id+9*i);console.log(bishop_moves);}
-                
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 >= start_id % 8){break;}
-                    if(start_id-9*i<0){break;}
-                    if(document.querySelector(`[square_id="${start_id-9*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-9*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id-9*i);break;}bishop_moves.push(start_id-9*i);console.log(bishop_moves);  }
-                   
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 <= start_id % 8){break;}
-                    if(start_id-7*i<0){break;}
-                    if(document.querySelector(`[square_id="${start_id-7*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-7*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id-7*i);break;}bishop_moves.push(start_id-7*i);console.log(bishop_moves);  }
-                
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 >= start_id % 8){break;}
-                    if(start_id+7*i>63){break;}
-                    if(document.querySelector(`[square_id="${start_id+7*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+7*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}bishop_moves.push(start_id+7*i);break;}bishop_moves.push(start_id+7*i);console.log(bishop_moves);  }
+            var bishop_moves = [];
+            function get_bishop_moves() {
+                const directions = [
+                    { offset: 9,  type: 'dr' },
+                    { offset: 7,  type: 'dl' },
+                    { offset: -7, type: 'ur' },
+                    { offset: -9, type: 'ul' }
+                ];
+
+                directions.forEach(dir => {
+                    for (let i = 1; i < 8; i++) { 
+                        let legal_id = start_id + dir.offset * i;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
+                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
+
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+                        if (!square) break;
+
+                        const pieceOnSquare = square.querySelector('.piece');
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            bishop_moves.push(legal_id);
+                            break;
+                        }
+                        bishop_moves.push(legal_id);
+                    }
+                });
             }
-            bishop(); //i think this is the best way, if (includes) will probably useful for a legal move definer (checks) 
-            if(bishop_moves.includes(target_id)){
+
+            get_bishop_moves();
+            console.log("bishop ",bishop_moves);
+            if (bishop_moves.includes(target_id)) {
                 return true;
             }
+            return false;
+
         case 'rook':
             var rook_moves = [];
-            function rook(){
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 != start_id % 8){break;}
-                    if(start_id+8*i>63){break;}
-                    if(document.querySelector(`[square_id="${start_id+8*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+8*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id+8*i);break;}rook_moves.push(start_id+8*i);console.log(rook_moves);}
-                
-                for(let i = 1;i<7;i++){
-                    if(target_id % 8 != start_id % 8){break;}
-                    if(start_id-8*i<0){break;}
-                    if(document.querySelector(`[square_id="${start_id-8*i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-8*i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id-8*i);break;}rook_moves.push(start_id-8*i);console.log(rook_moves);}
-            
-                for(let i = 1;i<7;i++){
-                    if(Math.floor(start_id/8)!=Math.floor(target_id/8)){break;}
-                    if(document.querySelector(`[square_id="${start_id+i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id+i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id+i);break;}rook_moves.push(start_id+i);console.log(rook_moves);}
-                
-                for(let i = 1;i<7;i++){
-                    if(Math.floor(start_id/8)!=Math.floor(target_id/8)){break;}
-                    if(document.querySelector(`[square_id="${start_id-i}"]`).firstChild){const piece_colour = document.querySelector(`[square_id="${start_id-i}"]`).firstChild.firstChild.getAttribute('class');if(piece_colour==turn){break;}rook_moves.push(start_id-i);break;}rook_moves.push(start_id-i);console.log(rook_moves);}
+            function get_rook_moves() {
+                const directions = [
+                    { offset: 8,  type: 'v'  },
+                    { offset: -8, type: 'v'  },
+                    { offset: 1,  type: 'h'  },
+                    { offset: -1, type: 'h'  }
+                ];
+
+                directions.forEach(dir => {
+                    for (let i = 1; i < 8; i++) { 
+                        let legal_id = start_id + dir.offset * i;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
+
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+                        if (!square) break;
+
+                        const pieceOnSquare = square.querySelector('.piece');
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            rook_moves.push(legal_id);
+                            break;
+                        }
+                        rook_moves.push(legal_id);
+                    }
+                });
             }
-            rook(); //same logic as bishop
-            if(rook_moves.includes(target_id)){
+
+            get_rook_moves();
+            console.log("rook ",rook_moves);
+            if (rook_moves.includes(target_id)) {
                 return true;
             }
+            return false;
+
+        case 'queen':
+            var queen_moves = [];
+            function get_queen_moves() {
+                const directions = [
+                    { offset: 8,  type: 'v'  },
+                    { offset: -8, type: 'v'  },
+                    { offset: 1,  type: 'h'  },
+                    { offset: -1, type: 'h'  },
+                    { offset: 9,  type: 'dr' },
+                    { offset: 7,  type: 'dl' },
+                    { offset: -7, type: 'ur' },
+                    { offset: -9, type: 'ul' }
+                ];
+
+                directions.forEach(dir => {
+                    for (let i = 1; i < 8; i++) { 
+                        let legal_id = start_id + dir.offset * i;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
+                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
+                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
+                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
+
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+                        if (!square) break;
+
+                        const pieceOnSquare = square.querySelector('.piece');
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            queen_moves.push(legal_id);
+                            break;
+                        }
+                        queen_moves.push(legal_id);
+                    }
+                });
+            }
+
+            get_queen_moves();
+            console.log("queen ",queen_moves);
+            if (queen_moves.includes(target_id)) {
+                return true;
+            }
+            return false;
     }
         }
 change_ids();
