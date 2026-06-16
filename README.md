@@ -13,6 +13,8 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 14/06 - Slider pieces reworked, preparing to work on legal moves (still)
 
+17/06 - All pieces can move with no bugs, next stepis check detection
+
 
 
 
