@@ -137,6 +137,9 @@ function revert_ids(){//yeah seems useful
     all_squares.forEach((square, i) => square.setAttribute('square_id', (i)) 
     )   
 }
+function check_check(){
+    
+}
 
 function check_valid(target){// can you play that?
     const target_square = event.target.closest('.square');
@@ -155,34 +158,112 @@ function check_valid(target){// can you play that?
     switch(piece){
         
         case 'pawn':
+            var pawn_moves = [];
             const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
+            function get_pawn_moves(start) {
+                const directions = [
+                    { offset: 8,  type: 'v'  },
+                    { offset: 16, type: 'v2'},
+                    { offset: 9,  type: 'dl'  },
+                    { offset: 7, type: 'dr'  }
+                ];
 
-            const one_step = start_id + 8 === target_id && !document.querySelector(`[square_id="${start_id + 8}"]`).firstChild;
-            const two_step = pawn_start_row.includes(start_id) && start_id + 16 === target_id && !document.querySelector(`[square_id="${start_id + 8}"]`).firstChild && !document.querySelector(`[square_id="${start_id + 16}"]`).firstChild;
-            const capture_right = start_id + 7 === target_id && document.querySelector(`[square_id="${start_id + 7}"]`).firstChild && start_id % 8 != 0 && can_drop;
-            const capture_left = start_id + 9 === target_id && document.querySelector(`[square_id="${start_id + 9}"]`).firstChild && start_id % 8 != 7 && can_drop;
+                directions.forEach(dir => {
+                    for (let i = 1; i < 2; i++) { 
+                        let legal_id = start + dir.offset * i;
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+                        let block_piece = document.querySelector(`[square_id="${legal_id-8}"]`);
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                        const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
+                        
+                        const column_diff = legal_id % 8 - start % 8;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (!square) break;
 
-            if(one_step || two_step || capture_left || capture_right){
+                        if (dir.type === 'v' && pieceOnSquare) break;
+                        if (dir.type === 'v2' && pieceOnSquarebefore && pieceOnSquare) break;
+                        if (dir.type === 'v2' && !pawn_start_row.includes(start)) break;
+                        if (dir.type === 'dl' && !pieceOnSquare) break;
+                        if (dir.type === 'dr' && !pieceOnSquare) break;
+
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            pawn_moves.push(legal_id);
+                            break;
+                        }
+                        pawn_moves.push(legal_id);
+                    }
+                });
+                
+            }
+            get_pawn_moves(start_id);
+            console.log("pawn ",pawn_moves);
+            if (pawn_moves.includes(target_id)) {
                 return true;
             }
+            return false;
+            
         break;
+        
         case 'knight': //the dum yt tutorial doesn't account for EDGE wrap ugh
+            var knight_moves = [];
 
-            const up2_right1 = (row_diff === 17) && (col_diff === 1);
-            const p2_left1 = (row_diff === 15) && (col_diff === -1);
-            const up1_right2 = (row_diff === 10) && (col_diff === 2);
-            const up1_left2 = (row_diff === 6) && (col_diff === -2);
-            const down2_left1 = (row_diff === -17) && (col_diff === -1);
-            const down2_right1 = (row_diff === -15) && (col_diff === 1);
-            const down1_left2 = (row_diff === -10) && (col_diff === -2);
-            const down1_right2 = (row_diff === -6) && (col_diff === 2);
+            function get_knight_moves(start) {
 
-            if(can_drop && (up2_right1 || p2_left1 || up1_right2 || up1_left2 || down2_left1 || down2_right1 || down1_left2 || down1_right2)){
+                const directions = [
+                    { offset: 17,  type: 'u2l1'  },
+                    { offset: 15, type: 'u2r1'  },
+                    { offset: 10,  type: 'u1l2'  },
+                    { offset: 6, type: 'u1r2'  },
+                    { offset: -17,  type: 'd2r1' },
+                    { offset: -15,  type: 'd2l1' },
+                    { offset: -10, type: 'd1r2' },
+                    { offset: -6, type: 'd1l2' } 
+                ];
+
+                directions.forEach(dir => {
+                    for (let i = 1; i < 2; i++) { 
+                        let legal_id = start + dir.offset * i;
+                        const column_diff = legal_id % 8 - start % 8;
+                        if (legal_id < 0 || legal_id > 63) break;
+                        if (dir.type === 'u2r1' && column_diff != -1) break;
+                        if (dir.type === 'u2l1' && column_diff != 1) break;
+                        if (dir.type === 'u1r2' && column_diff != -2) break;
+                        if (dir.type === 'u1l2' && column_diff != 2) break;
+                        if (dir.type === 'd2r1' && column_diff != -1) break;
+                        if (dir.type === 'd2l1' && column_diff != 1) break;
+                        if (dir.type === 'd1r2' && column_diff != -2) break;
+                        if (dir.type === 'd1l2' && column_diff != 2) break;
+
+                        let square = document.querySelector(`[square_id="${legal_id}"]`);
+
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                        if (pieceOnSquare) {
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                            if (piece_colour === turn) { 
+                                break;
+                            }
+                            knight_moves.push(legal_id);
+                            break;
+                        }
+                        knight_moves.push(legal_id);
+                    }
+                });
+            }
+
+            get_knight_moves(start_id);
+            console.log("knight ",knight_moves);
+            if (knight_moves.includes(target_id)) {
                 return true;
             }
+            return false;
+
         case 'king': //bruh bruh bruh
             var king_moves = [];
-            function get_king_moves() {
+            function get_king_moves(start) {
                 const directions = [
                     { offset: 8,  type: 'v'  },
                     { offset: -8, type: 'v'  },
@@ -196,7 +277,7 @@ function check_valid(target){// can you play that?
 
                 directions.forEach(dir => {
                     for (let i = 1; i < 2; i++) { 
-                        let legal_id = start_id + dir.offset * i;
+                        let legal_id = start + dir.offset * i;
                         if (legal_id < 0 || legal_id > 63) break;
                         if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
                         if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
@@ -207,9 +288,9 @@ function check_valid(target){// can you play that?
                         let square = document.querySelector(`[square_id="${legal_id}"]`);
                         if (!square) break;
 
-                        const pieceOnSquare = square.querySelector('.piece');
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
                             if (piece_colour === turn) { 
                                 break;
                             }
@@ -221,7 +302,7 @@ function check_valid(target){// can you play that?
                 });
             }
 
-            get_king_moves();
+            get_king_moves(start_id);
             console.log("king ",king_moves);
             if (king_moves.includes(target_id)) {
                 return true;
@@ -230,7 +311,7 @@ function check_valid(target){// can you play that?
 
         case 'bishop':
             var bishop_moves = [];
-            function get_bishop_moves() {
+            function get_bishop_moves(start) {
                 const directions = [
                     { offset: 9,  type: 'dr' },
                     { offset: 7,  type: 'dl' },
@@ -240,7 +321,7 @@ function check_valid(target){// can you play that?
 
                 directions.forEach(dir => {
                     for (let i = 1; i < 8; i++) { 
-                        let legal_id = start_id + dir.offset * i;
+                        let legal_id = start + dir.offset * i;
                         if (legal_id < 0 || legal_id > 63) break;
                         if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
                         if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
@@ -250,9 +331,9 @@ function check_valid(target){// can you play that?
                         let square = document.querySelector(`[square_id="${legal_id}"]`);
                         if (!square) break;
 
-                        const pieceOnSquare = square.querySelector('.piece');
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
                             if (piece_colour === turn) { 
                                 break;
                             }
@@ -264,7 +345,7 @@ function check_valid(target){// can you play that?
                 });
             }
 
-            get_bishop_moves();
+            get_bishop_moves(start_id);
             console.log("bishop ",bishop_moves);
             if (bishop_moves.includes(target_id)) {
                 return true;
@@ -273,7 +354,7 @@ function check_valid(target){// can you play that?
 
         case 'rook':
             var rook_moves = [];
-            function get_rook_moves() {
+            function get_rook_moves(start) {
                 const directions = [
                     { offset: 8,  type: 'v'  },
                     { offset: -8, type: 'v'  },
@@ -283,16 +364,16 @@ function check_valid(target){// can you play that?
 
                 directions.forEach(dir => {
                     for (let i = 1; i < 8; i++) { 
-                        let legal_id = start_id + dir.offset * i;
+                        let legal_id = start + dir.offset * i;
                         if (legal_id < 0 || legal_id > 63) break;
                         if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
 
                         let square = document.querySelector(`[square_id="${legal_id}"]`);
                         if (!square) break;
 
-                        const pieceOnSquare = square.querySelector('.piece');
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
                             if (piece_colour === turn) { 
                                 break;
                             }
@@ -304,7 +385,7 @@ function check_valid(target){// can you play that?
                 });
             }
 
-            get_rook_moves();
+            get_rook_moves(start_id);
             console.log("rook ",rook_moves);
             if (rook_moves.includes(target_id)) {
                 return true;
@@ -313,7 +394,7 @@ function check_valid(target){// can you play that?
 
         case 'queen':
             var queen_moves = [];
-            function get_queen_moves() {
+            function get_queen_moves(start) {
                 const directions = [
                     { offset: 8,  type: 'v'  },
                     { offset: -8, type: 'v'  },
@@ -327,7 +408,7 @@ function check_valid(target){// can you play that?
 
                 directions.forEach(dir => {
                     for (let i = 1; i < 8; i++) { 
-                        let legal_id = start_id + dir.offset * i;
+                        let legal_id = start + dir.offset * i;
                         if (legal_id < 0 || legal_id > 63) break;
                         if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
                         if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
@@ -338,9 +419,9 @@ function check_valid(target){// can you play that?
                         let square = document.querySelector(`[square_id="${legal_id}"]`);
                         if (!square) break;
 
-                        const pieceOnSquare = square.querySelector('.piece');
+                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img').getAttribute('class');
+                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
                             if (piece_colour === turn) { 
                                 break;
                             }
@@ -352,7 +433,7 @@ function check_valid(target){// can you play that?
                 });
             }
 
-            get_queen_moves();
+            get_queen_moves(start_id);
             console.log("queen ",queen_moves);
             if (queen_moves.includes(target_id)) {
                 return true;
