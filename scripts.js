@@ -5,6 +5,7 @@ var start_pos_id; //id of piece dragged
 var dragged_element;
 var turn = 'white';
 var opp_taken;
+
 player_turn.textContent = 'white';
 //pieces
 
@@ -102,13 +103,14 @@ function drag_drop(e){//detects drop of drag...
         if(opp_taken){ //if regular capture
             e.target.parentNode.append(dragged_element);
             e.target.remove(); //kept leaving ghost pieces with no img child, this is the fix
-            document.querySelectorAll('.piece:not(:has(img))').forEach(piece => piece.remove()); 
+            document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
             change_turn();
                 console.log(dragged_element.id)
             return;
         }
 
         e.target.append(dragged_element); 
+        document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
         change_turn();
         return;
         }
@@ -181,7 +183,7 @@ function check_valid(target){// can you play that?
                         if (!square) break;
 
                         if (dir.type === 'v' && pieceOnSquare) break;
-                        if (dir.type === 'v2' && pieceOnSquarebefore && pieceOnSquare) break;
+                        if (dir.type === 'v2' &&(pieceOnSquarebefore || pieceOnSquare)) break;
                         if (dir.type === 'v2' && !pawn_start_row.includes(start)) break;
                         if (dir.type === 'dl' && !pieceOnSquare) break;
                         if (dir.type === 'dr' && !pieceOnSquare) break;
