@@ -15,6 +15,8 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 17/06 - All pieces can move with no bugs, next stepis check detection
 
+18/06 - quitting for now to try my hands on a bot WITH the existing chess.js, and also finishing other coding projects
+
 
 
 
