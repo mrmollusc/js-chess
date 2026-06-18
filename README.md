@@ -1,5 +1,5 @@
-# js-chess
-a chess player and hopefully bot website idk im not that good i need hours please speed i need this
+# mrmollusc's jschess
+A chess player without the cool moves and checking.
 
 6/06 - Started Project, followed a tutorial.
 
@@ -17,12 +17,8 @@ a chess player and hopefully bot website idk im not that good i need hours pleas
 
 18/06 - quitting for now to try my hands on a bot WITH the existing chess.js, and also finishing other coding projects
 
-
-
-
-
-
-
+# AI USE STATEMENT
+Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
 # LINKS
 
@@ -31,3 +27,6 @@ js chess tutorial -  https://www.youtube.com/watch?v=Qv0fvm5B0EM
 cracked c# user: @irekit
 
 cracked python user: @vincentchen18
+
+
+-# rip mrmollusc
