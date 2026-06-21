@@ -3,9 +3,14 @@ const player_turn = document.querySelector('#player_turn');
 const info = document.querySelector('#info'); 
 var start_pos_id; //id of piece dragged
 var dragged_element;
+var opp_taken = [];
+var pawn_moves = [];
 var turn = 'white';
-var opp_taken;
-
+var knight_moves = [];
+var rook_moves = [];
+var king_moves = [];
+var bishop_moves = [];
+var queen_moves = [];
 player_turn.textContent = 'white';
 //pieces
 
@@ -40,6 +45,7 @@ const start_board = [
 function delay(ms){ //delAy
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
 
 function create_board() {
     start_board.forEach((index, i) => {
@@ -138,10 +144,239 @@ function revert_ids(){//yeah seems useful
     const all_squares = document.querySelectorAll('.square')
     all_squares.forEach((square, i) => square.setAttribute('square_id', (i)) 
     )   
-}
-function check_check(){
+}        
+
+function get_pawn_moves(start, array) { 
+            const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
+            const directions = [
+                { offset: 8,  type: 'v'  },
+                { offset: 16, type: 'v2'},
+                { offset: 9,  type: 'dl'  },
+                { offset: 7, type: 'dr'  }
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 2; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let piece = square.firstChild
+                    let block_piece = document.querySelector(`[square_id="${legal_id-8}"]`);
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
+                        
+                    const column_diff = legal_id % 8 - start % 8;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (!square) break;
+
+                    if (dir.type === 'v' && pieceOnSquare) break;
+                    if (dir.type === 'v2' &&(pieceOnSquarebefore || pieceOnSquare)) break;
+                    if (dir.type === 'v2' && !pawn_start_row.includes(start)) break;
+                    if (dir.type === 'dl' && !pieceOnSquare) break;
+                    if (dir.type === 'dr' && !pieceOnSquare) break;
+
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour == turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}  
     
+function get_knight_moves(start, array) {
+    start = Number(start); 
+            const directions = [
+                { offset: 17,  type: 'u2l1'  },
+                { offset: 15, type: 'u2r1'  },
+                { offset: 10,  type: 'u1l2'  },
+                { offset: 6, type: 'u1r2'  },
+                { offset: -17,  type: 'd2r1' },
+                { offset: -15,  type: 'd2l1' },
+                { offset: -10, type: 'd1r2' },
+                { offset: -6, type: 'd1l2' } 
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 2; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    const column_diff = legal_id % 8 - start % 8;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (dir.type === 'u2r1' && column_diff != -1) break;
+                    if (dir.type === 'u2l1' && column_diff != 1) break;
+                    if (dir.type === 'u1r2' && column_diff != -2) break;
+                    if (dir.type === 'u1l2' && column_diff != 2) break;
+                    if (dir.type === 'd2r1' && column_diff != -1) break;
+                    if (dir.type === 'd2l1' && column_diff != 1) break;
+                    if (dir.type === 'd1r2' && column_diff != -2) break;
+                    if (dir.type === 'd1l2' && column_diff != 2) break;
+
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour === turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
 }
+    
+function get_king_moves(start, array) {
+    start = Number(start); 
+            const directions = [
+                { offset: 8,  type: 'v'  },
+                { offset: -8, type: 'v'  },
+                { offset: 1,  type: 'h'  },
+                { offset: -1, type: 'h'  },
+                { offset: 9,  type: 'dr' },
+                { offset: 7,  type: 'dl' },
+                { offset: -7, type: 'ur' },
+                { offset: -9, type: 'ul' } 
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 2; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
+                    if (dir.type === 'dr' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'dl' && (legal_id % 8 >= start % 8)) break;
+                    if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    if (!square) break;
+
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour === turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}  
+    
+function get_bishop_moves(start, array) {
+    start = Number(start); 
+            const directions = [
+                { offset: 9,  type: 'dr' },
+                { offset: 7,  type: 'dl' },
+                { offset: -7, type: 'ur' },
+                { offset: -9, type: 'ul' }
+            ];
+
+                directions.forEach(dir => {
+                for (let i = 1; i < 8; i++) { 
+                let legal_id = start + dir.offset * i;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (dir.type === 'dr' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'dl' && (legal_id % 8 >= start % 8)) break;
+                    if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    if (!square) break;
+
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour === turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}
+
+function get_rook_moves(start, array) {
+    start = Number(start); 
+            const directions = [
+                { offset: 8,  type: 'v'  },
+                { offset: -8, type: 'v'  },
+                { offset: 1,  type: 'h'  },
+                { offset: -1, type: 'h'  }
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 8; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
+
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    if (!square) break;
+
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour === turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}
+    
+function get_queen_moves(start, array) {    
+    start = Number(start); 
+            const directions = [
+                { offset: 8,  type: 'v'  },
+                { offset: -8, type: 'v'  },
+                { offset: 1,  type: 'h'  },
+                { offset: -1, type: 'h'  },
+                { offset: 9,  type: 'dr' },
+                { offset: 7,  type: 'dl' },
+                { offset: -7, type: 'ur' },
+                { offset: -9, type: 'ul' }
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 8; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
+                    if (dir.type === 'dr' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'dl' && (legal_id % 8 >= start % 8)) break;
+                    if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    if (!square) break;
+
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour === turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}
+
 
 function check_valid(target){// can you play that?
     const target_square = event.target.closest('.square');
@@ -152,295 +387,62 @@ function check_valid(target){// can you play that?
     const start_column = start_id % 8; // ALL THE MANUAL CASES SOB
     const target_column = target_id % 8;
     const col_diff = target_column - start_column;
-    const row_diff = target_id - start_id;   
-
-    
-    //all the legal moves go here
+    const row_diff = target_id - start_id;  
 
     switch(piece){
-        
         case 'pawn':
-            var pawn_moves = [];
-            const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
-            function get_pawn_moves(start) {
-                const directions = [
-                    { offset: 8,  type: 'v'  },
-                    { offset: 16, type: 'v2'},
-                    { offset: 9,  type: 'dl'  },
-                    { offset: 7, type: 'dr'  }
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 2; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-                        let block_piece = document.querySelector(`[square_id="${legal_id-8}"]`);
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
-                        
-                        const column_diff = legal_id % 8 - start % 8;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (!square) break;
-
-                        if (dir.type === 'v' && pieceOnSquare) break;
-                        if (dir.type === 'v2' &&(pieceOnSquarebefore || pieceOnSquare)) break;
-                        if (dir.type === 'v2' && !pawn_start_row.includes(start)) break;
-                        if (dir.type === 'dl' && !pieceOnSquare) break;
-                        if (dir.type === 'dr' && !pieceOnSquare) break;
-
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            pawn_moves.push(legal_id);
-                            break;
-                        }
-                        pawn_moves.push(legal_id);
-                    }
-                });
-                
-            }
-            get_pawn_moves(start_id);
+            pawn_moves=[];
+            get_pawn_moves(start_id,pawn_moves);
             console.log("pawn ",pawn_moves);
             if (pawn_moves.includes(target_id)) {
                 return true;
             }
             return false;
-            
-        break;
-        
         case 'knight': //the dum yt tutorial doesn't account for EDGE wrap ugh
-            var knight_moves = [];
-
-            function get_knight_moves(start) {
-
-                const directions = [
-                    { offset: 17,  type: 'u2l1'  },
-                    { offset: 15, type: 'u2r1'  },
-                    { offset: 10,  type: 'u1l2'  },
-                    { offset: 6, type: 'u1r2'  },
-                    { offset: -17,  type: 'd2r1' },
-                    { offset: -15,  type: 'd2l1' },
-                    { offset: -10, type: 'd1r2' },
-                    { offset: -6, type: 'd1l2' } 
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 2; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        const column_diff = legal_id % 8 - start % 8;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (dir.type === 'u2r1' && column_diff != -1) break;
-                        if (dir.type === 'u2l1' && column_diff != 1) break;
-                        if (dir.type === 'u1r2' && column_diff != -2) break;
-                        if (dir.type === 'u1l2' && column_diff != 2) break;
-                        if (dir.type === 'd2r1' && column_diff != -1) break;
-                        if (dir.type === 'd2l1' && column_diff != 1) break;
-                        if (dir.type === 'd1r2' && column_diff != -2) break;
-                        if (dir.type === 'd1l2' && column_diff != 2) break;
-
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            knight_moves.push(legal_id);
-                            break;
-                        }
-                        knight_moves.push(legal_id);
-                    }
-                });
-            }
-
-            get_knight_moves(start_id);
+            knight_moves=[];
+            get_knight_moves(start_id,knight_moves);
             console.log("knight ",knight_moves);
             if (knight_moves.includes(target_id)) {
                 return true;
             }
             return false;
-
         case 'king': //bruh bruh bruh
-            var king_moves = [];
-            function get_king_moves(start) {
-                const directions = [
-                    { offset: 8,  type: 'v'  },
-                    { offset: -8, type: 'v'  },
-                    { offset: 1,  type: 'h'  },
-                    { offset: -1, type: 'h'  },
-                    { offset: 9,  type: 'dr' },
-                    { offset: 7,  type: 'dl' },
-                    { offset: -7, type: 'ur' },
-                    { offset: -9, type: 'ul' } 
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 2; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
-                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
-                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
-
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-                        if (!square) break;
-
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            king_moves.push(legal_id);
-                            break;
-                        }
-                        king_moves.push(legal_id);
-                    }
-                });
-            }
-
-            get_king_moves(start_id);
+            king_moves=[];
+            get_king_moves(start_id,king_moves);
             console.log("king ",king_moves);
             if (king_moves.includes(target_id)) {
                 return true;
             }
             return false;
-
         case 'bishop':
-            var bishop_moves = [];
-            function get_bishop_moves(start) {
-                const directions = [
-                    { offset: 9,  type: 'dr' },
-                    { offset: 7,  type: 'dl' },
-                    { offset: -7, type: 'ur' },
-                    { offset: -9, type: 'ul' }
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 8; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
-                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
-
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-                        if (!square) break;
-
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            bishop_moves.push(legal_id);
-                            break;
-                        }
-                        bishop_moves.push(legal_id);
-                    }
-                });
-            }
-
-            get_bishop_moves(start_id);
+            bishop_moves=[];
+            get_bishop_moves(start_id,bishop_moves);
             console.log("bishop ",bishop_moves);
             if (bishop_moves.includes(target_id)) {
                 return true;
             }
             return false;
-
         case 'rook':
-            var rook_moves = [];
-            function get_rook_moves(start) {
-                const directions = [
-                    { offset: 8,  type: 'v'  },
-                    { offset: -8, type: 'v'  },
-                    { offset: 1,  type: 'h'  },
-                    { offset: -1, type: 'h'  }
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 8; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
-
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-                        if (!square) break;
-
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            rook_moves.push(legal_id);
-                            break;
-                        }
-                        rook_moves.push(legal_id);
-                    }
-                });
-            }
-
-            get_rook_moves(start_id);
+            rook_moves=[];
+            get_rook_moves(start_id,rook_moves);
             console.log("rook ",rook_moves);
             if (rook_moves.includes(target_id)) {
                 return true;
             }
             return false;
-
         case 'queen':
-            var queen_moves = [];
-            function get_queen_moves(start) {
-                const directions = [
-                    { offset: 8,  type: 'v'  },
-                    { offset: -8, type: 'v'  },
-                    { offset: 1,  type: 'h'  },
-                    { offset: -1, type: 'h'  },
-                    { offset: 9,  type: 'dr' },
-                    { offset: 7,  type: 'dl' },
-                    { offset: -7, type: 'ur' },
-                    { offset: -9, type: 'ul' }
-                ];
-
-                directions.forEach(dir => {
-                    for (let i = 1; i < 8; i++) { 
-                        let legal_id = start + dir.offset * i;
-                        if (legal_id < 0 || legal_id > 63) break;
-                        if (dir.type === 'h'  && Math.floor(start_id / 8) !== Math.floor(legal_id / 8)) break;
-                        if (dir.type === 'dr' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'dl' && (legal_id % 8 >= start_id % 8)) break;
-                        if (dir.type === 'ur' && (legal_id % 8 <= start_id % 8)) break;
-                        if (dir.type === 'ul' && (legal_id % 8 >= start_id % 8)) break;
-
-                        let square = document.querySelector(`[square_id="${legal_id}"]`);
-                        if (!square) break;
-
-                        const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                        if (pieceOnSquare) {
-                            let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                            if (piece_colour === turn) { 
-                                break;
-                            }
-                            queen_moves.push(legal_id);
-                            break;
-                        }
-                        queen_moves.push(legal_id);
-                    }
-                });
-            }
-
-            get_queen_moves(start_id);
+            queen_moves=[];
+            get_queen_moves(start_id,queen_moves);
             console.log("queen ",queen_moves);
             if (queen_moves.includes(target_id)) {
                 return true;
             }
             return false;
     }
-        }
+    
+}
+
+    
+    
+    
 change_ids();
