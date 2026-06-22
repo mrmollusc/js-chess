@@ -97,7 +97,7 @@ function drag_over(e){// uh idk
     e.preventDefault();
 }
 
-function drag_drop(e){//detects drop of drag...
+async function drag_drop(e){//detects drop of drag...
     e.stopPropagation();  
     const your_turn = dragged_element.firstChild.classList.contains(turn);
     const opp_turn = turn === 'white' ? 'black' : 'white';
@@ -110,17 +110,59 @@ function drag_drop(e){//detects drop of drag...
             e.target.parentNode.append(dragged_element);
             e.target.remove(); //kept leaving ghost pieces with no img child, this is the fix
             document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-            change_turn();
-                console.log(dragged_element.id)
+            await attacked_squares()
+            console.log('done')
+            //change_turn();
+            console.log(dragged_element.id)
             return;
         }
 
         e.target.append(dragged_element); 
         document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-        change_turn();
+        await attacked_squares()
+        console.log('done')
+        //change_turn();
         return;
         }
 }
+
+function attacked_squares(){
+    var attacked_squares = [];
+    all_squares.forEach((square, i) => {   
+        let v_id = 63-i; 
+
+        const piece = square.firstChild;
+        
+        if (piece) {
+            const piece_color = piece.firstChild.getAttribute('class');
+            const piece_type = piece.getAttribute('id');
+
+            // Use .includes() if your class contains multiple words like "piece white"
+            if (piece_color.includes(turn)) {
+                if (piece_type == 'pawn') {
+                    get_virtual_pawn_attacks(v_id, attacked_squares);
+                }
+                else if (piece_type == 'knight') {
+                    get_knight_moves(v_id, attacked_squares);
+                }
+                else if (piece_type == 'bishop') {
+                    get_bishop_moves(v_id, attacked_squares);
+                }
+                else if (piece_type == 'rook') {
+                    get_rook_moves(v_id, attacked_squares);
+                }
+                else if (piece_type == 'king') {
+                    get_king_moves(v_id, attacked_squares);
+                }
+                else if (piece_type == 'queen') {
+                    get_queen_moves(v_id, attacked_squares);
+                }
+            }
+        }
+    });
+    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));
+}
+
 
 function change_turn(){ //changes turn no sh       utdown
     if(turn === 'black'){
@@ -146,11 +188,8 @@ function revert_ids(){//yeah seems useful
     )   
 }        
 
-function get_pawn_moves(start, array) { 
-            const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
+function get_virtual_pawn_attacks(start, array) { 
             const directions = [
-                { offset: 8,  type: 'v'  },
-                { offset: 16, type: 'v2'},
                 { offset: 9,  type: 'dl'  },
                 { offset: 7, type: 'dr'  }
             ];
@@ -159,7 +198,71 @@ function get_pawn_moves(start, array) {
                 for (let i = 1; i < 2; i++) { 
                     let legal_id = start + dir.offset * i;
                     let square = document.querySelector(`[square_id="${legal_id}"]`);
-                    let piece = square.firstChild
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                        
+                    const column_diff = legal_id % 8 - start % 8;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (!square) break;
+
+                    if (dir.type == 'dl' && (legal_id % 8 <= start % 8)) break;
+                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+                    
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour == turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}
+
+function get_pawn_attacks(start, array) { 
+            const directions = [
+                { offset: 9,  type: 'dl'  },
+                { offset: 7, type: 'dr'  }
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 2; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                        
+                    const column_diff = legal_id % 8 - start % 8;
+                    if (legal_id < 0 || legal_id > 63) break;
+                    if (!square) break;
+
+                    if (dir.type === 'dl' && !pieceOnSquare) break;
+                    if (dir.type === 'dr' && !pieceOnSquare) break;
+
+                    if (pieceOnSquare) {
+                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        if (piece_colour == turn) { 
+                            break;
+                        }
+                        array.push(legal_id);
+                        break;
+                    }
+                    array.push(legal_id);
+                }
+            });
+}
+
+function get_pawn_moves(start, array) { 
+            const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
+            const directions = [
+                { offset: 8,  type: 'v'  },
+                { offset: 16, type: 'v2'},
+            ];
+
+            directions.forEach(dir => {
+                for (let i = 1; i < 2; i++) { 
+                    let legal_id = start + dir.offset * i;
+                    let square = document.querySelector(`[square_id="${legal_id}"]`);
                     let block_piece = document.querySelector(`[square_id="${legal_id-8}"]`);
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
@@ -171,8 +274,6 @@ function get_pawn_moves(start, array) {
                     if (dir.type === 'v' && pieceOnSquare) break;
                     if (dir.type === 'v2' &&(pieceOnSquarebefore || pieceOnSquare)) break;
                     if (dir.type === 'v2' && !pawn_start_row.includes(start)) break;
-                    if (dir.type === 'dl' && !pieceOnSquare) break;
-                    if (dir.type === 'dr' && !pieceOnSquare) break;
 
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
@@ -392,7 +493,8 @@ function check_valid(target){// can you play that?
     switch(piece){
         case 'pawn':
             pawn_moves=[];
-            get_pawn_moves(start_id,pawn_moves);
+            get_pawn_moves(start_id,pawn_moves,turn);
+            get_pawn_attacks(start_id,pawn_moves,turn);
             console.log("pawn ",pawn_moves);
             if (pawn_moves.includes(target_id)) {
                 return true;
@@ -401,14 +503,14 @@ function check_valid(target){// can you play that?
         case 'knight': //the dum yt tutorial doesn't account for EDGE wrap ugh
             knight_moves=[];
             get_knight_moves(start_id,knight_moves);
-            console.log("knight ",knight_moves);
+            console.log("knight ",knight_moves,turn);
             if (knight_moves.includes(target_id)) {
                 return true;
             }
             return false;
         case 'king': //bruh bruh bruh
             king_moves=[];
-            get_king_moves(start_id,king_moves);
+            get_king_moves(start_id,king_moves,turn);
             console.log("king ",king_moves);
             if (king_moves.includes(target_id)) {
                 return true;
@@ -416,7 +518,7 @@ function check_valid(target){// can you play that?
             return false;
         case 'bishop':
             bishop_moves=[];
-            get_bishop_moves(start_id,bishop_moves);
+            get_bishop_moves(start_id,bishop_moves,turn);
             console.log("bishop ",bishop_moves);
             if (bishop_moves.includes(target_id)) {
                 return true;
@@ -424,7 +526,7 @@ function check_valid(target){// can you play that?
             return false;
         case 'rook':
             rook_moves=[];
-            get_rook_moves(start_id,rook_moves);
+            get_rook_moves(start_id,rook_moves,turn);
             console.log("rook ",rook_moves);
             if (rook_moves.includes(target_id)) {
                 return true;
@@ -432,7 +534,7 @@ function check_valid(target){// can you play that?
             return false;
         case 'queen':
             queen_moves=[];
-            get_queen_moves(start_id,queen_moves);
+            get_queen_moves(start_id,queen_moves,turn);
             console.log("queen ",queen_moves);
             if (queen_moves.includes(target_id)) {
                 return true;
@@ -440,9 +542,7 @@ function check_valid(target){// can you play that?
             return false;
     }
     
+    
 }
 
-    
-    
-    
 change_ids();
