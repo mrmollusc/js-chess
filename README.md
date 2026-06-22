@@ -17,6 +17,8 @@ A chess player without the cool moves and checking.
 
 18/06 - quitting for now to try my hands on a bot WITH the existing chess.js, and also finishing other coding projects
 
+23/06 - welp I need to actually finish something for the hours to count, finished coding check detection, now need to apply it and make a check flag.
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
