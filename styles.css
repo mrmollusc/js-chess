@@ -15,6 +15,7 @@
     height: 100px;
     width: 100px;
     user-select: none; 
+    position:relative;
 }
 .square img{
     height: 100px;
@@ -37,4 +38,12 @@
     font: 125px 'Mozilla Text';
     left: 1250px;
     top: 125px;
+}
+
+.square.ice.attack-highlight {
+    background-color: rgba(255, 99, 71, 0.45); 
+}
+
+.square.navy.attack-highlight {
+    background-color: rgba(220, 50, 35, 0.6); 
 }

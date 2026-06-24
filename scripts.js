@@ -11,6 +11,7 @@ var rook_moves = [];
 var king_moves = [];
 var bishop_moves = [];
 var queen_moves = [];
+var new_attacked_squares = [];
 player_turn.textContent = 'white';
 //pieces
 
@@ -54,7 +55,8 @@ function create_board() {
         square.classList.add('square');
         square.innerHTML = index;
         square.firstChild && square.firstChild.setAttribute('draggable', true);
-        square.setAttribute('square_id', i);
+        square.setAttribute('white_square_id', 63-i);
+        square.setAttribute('black_square_id', i);
         const row = Math.floor((63-i)/8) + 1;
 
         //colour the board
@@ -89,7 +91,7 @@ all_squares.forEach((square, i) => {//listens for dragging events
 })
 
 function drag_start(e){ //measures where you dragged from
-    start_pos_id = e.currentTarget.getAttribute('square_id'); // fix for vid
+    start_pos_id = e.currentTarget.getAttribute(`${turn}_square_id`); // fix for vid
     dragged_element = e.target.parentNode;
 }
 
@@ -97,96 +99,125 @@ function drag_over(e){// uh idk
     e.preventDefault();
 }
 
-async function drag_drop(e){//detects drop of drag...
+function drag_drop(e){//detects drop of drag...
     e.stopPropagation();  
+    const target_square = e.target.closest('.square');
+    if (!target_square) return;
     const your_turn = dragged_element.firstChild.classList.contains(turn);
     const opp_turn = turn === 'white' ? 'black' : 'white';
     opp_taken = e.target.classList.contains(opp_turn);
     const valid = check_valid(e.target)
 
+    const your_king = document.querySelector(`#king .${turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    const their_king = document.querySelector(`#king .${opp_turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    console.log(your_king,their_king)
+
     if(your_turn && valid){
 
         if(opp_taken){ //if regular capture
-            e.target.parentNode.append(dragged_element);
-            e.target.remove(); //kept leaving ghost pieces with no img child, this is the fix
+            const existing_piece = target_square.querySelector('.piece');
+            target_square.append(dragged_element);
+            console.log(e.target)
+            existing_piece.remove(); //kept leaving ghost pieces with no img child, this is the fix
             document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-            await attacked_squares()
-            console.log('done')
-            //change_turn();
-            console.log(dragged_element.id)
+            attacked_squares(turn);
+            
+            if(new_attacked_squares.includes(Number(their_king))){
+                console.log(new_attacked_squares,your_king)
+            }
+            
+            change_turn();
             return;
         }
 
         e.target.append(dragged_element); 
         document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-        await attacked_squares()
-        console.log('done')
-        //change_turn();
+        attacked_squares(turn);
+        
+        if(new_attacked_squares.includes(Number(their_king))){
+                console.log('check!')
+        }
+        change_turn();
         return;
+        
         }
 }
 
-function attacked_squares(){
+function attacked_squares(col){
     var attacked_squares = [];
     all_squares.forEach((square, i) => {   
-        let v_id = 63-i; 
 
-        const piece = square.firstChild;
-        
-        if (piece) {
-            const piece_color = piece.firstChild.getAttribute('class');
+        let correct_square = document.querySelector(`[${col}_square_id="${i}"]`);
+        if (!correct_square) return;
+
+        const piece = correct_square.querySelector('.piece');
+        const img = piece?.querySelector('img');
+
+        if (img && img.getAttribute('class') === col) {
             const piece_type = piece.getAttribute('id');
-
-            // Use .includes() if your class contains multiple words like "piece white"
-            if (piece_color.includes(turn)) {
-                if (piece_type == 'pawn') {
-                    get_virtual_pawn_attacks(v_id, attacked_squares);
-                }
-                else if (piece_type == 'knight') {
-                    get_knight_moves(v_id, attacked_squares);
-                }
-                else if (piece_type == 'bishop') {
-                    get_bishop_moves(v_id, attacked_squares);
-                }
-                else if (piece_type == 'rook') {
-                    get_rook_moves(v_id, attacked_squares);
-                }
-                else if (piece_type == 'king') {
-                    get_king_moves(v_id, attacked_squares);
-                }
-                else if (piece_type == 'queen') {
-                    get_queen_moves(v_id, attacked_squares);
-                }
+            
+            if (piece_type == 'pawn') {
+                get_virtual_pawn_attacks(i, attacked_squares, col);//only the diagonal movements count as threatning attacks (ie give check)
+            }
+            else if (piece_type == 'knight') {
+                get_knight_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'bishop') {
+                get_bishop_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'rook') {
+                get_rook_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'king') {
+                get_king_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'queen') {
+                get_queen_moves(i, attacked_squares, col);
             }
         }
     });
-    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));
+    new_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
+    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
 
+window.addEventListener("keydown",(e)=>{
+    if(event.repeat){
+            return;
+        }
+        if(e.key === 'l'){
+            const attacking_colour = (turn === 'white') ? 'black' : 'white';
+            new_attacked_squares.forEach((a)=>{
+                const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
+                console.log(turn)
+                marked.classList.add('attack-highlight');
+            })
+        }
+    })
+window.addEventListener("keyup",(e)=>{
+    if(event.repeat){
+            return;
+        }
+        if(e.key === 'l'){
+            const attacking_colour = (turn === 'white') ? 'black' : 'white';
+            new_attacked_squares.forEach((a)=>{
+                const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
+                console.log(turn)
+                marked.classList.remove('attack-highlight');
+            })
+        }
+    })
 
 function change_turn(){ //changes turn no sh       utdown
     if(turn === 'black'){
         turn = 'white';
         player_turn.textContent = 'white';
-        change_ids();
     }
     else{
         turn = 'black';
         player_turn.textContent = 'black';
-        revert_ids();
     }
     
-}
-function change_ids(){//um the tutorial said so, id's from white = 0 for piece movement: supposedly
-    const all_squares = document.querySelectorAll('.square')
-    all_squares.forEach((square, i) => square.setAttribute('square_id', (63-i))
-    )
-}
-function revert_ids(){//yeah seems useful
-    const all_squares = document.querySelectorAll('.square')
-    all_squares.forEach((square, i) => square.setAttribute('square_id', (i)) 
-    )   
-}        
+}   
 
 function get_virtual_pawn_attacks(start, array) { 
             const directions = [
@@ -195,28 +226,26 @@ function get_virtual_pawn_attacks(start, array) {
             ];
 
             directions.forEach(dir => {
-                for (let i = 1; i < 2; i++) { 
-                    let legal_id = start + dir.offset * i;
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
-                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                    let legal_id = start + dir.offset;
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    const pieceOnSquare = square ? square.querySelector('#pawn, #queen, #king, #rook, #knight, #bishop') : null;
                         
                     const column_diff = legal_id % 8 - start % 8;
-                    if (legal_id < 0 || legal_id > 63) break;
-                    if (!square) break;
+                    if (legal_id < 0 || legal_id > 63) return;
+                    if (!square) return;
 
-                    if (dir.type == 'dl' && (legal_id % 8 <= start % 8)) break;
-                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+                    if(Math.abs(legal_id%8-start%8)!=1) return;
                     
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                        
                         if (piece_colour == turn) { 
-                            break;
+                            return;
                         }
                         array.push(legal_id);
-                        break;
+                        return;
                     }
                     array.push(legal_id);
-                }
             });
 }
 
@@ -229,7 +258,7 @@ function get_pawn_attacks(start, array) {
             directions.forEach(dir => {
                 for (let i = 1; i < 2; i++) { 
                     let legal_id = start + dir.offset * i;
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         
                     const column_diff = legal_id % 8 - start % 8;
@@ -262,8 +291,8 @@ function get_pawn_moves(start, array) {
             directions.forEach(dir => {
                 for (let i = 1; i < 2; i++) { 
                     let legal_id = start + dir.offset * i;
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
-                    let block_piece = document.querySelector(`[square_id="${legal_id-8}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let block_piece = document.querySelector(`[${turn}_square_id="${legal_id-8}"]`);
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
                         
@@ -315,7 +344,7 @@ function get_knight_moves(start, array) {
                     if (dir.type === 'd1r2' && column_diff != -2) break;
                     if (dir.type === 'd1l2' && column_diff != 2) break;
 
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
@@ -354,7 +383,7 @@ function get_king_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
@@ -389,7 +418,7 @@ function get_bishop_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
@@ -421,7 +450,7 @@ function get_rook_moves(start, array) {
                     if (legal_id < 0 || legal_id > 63) break;
                     if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
 
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
@@ -461,7 +490,7 @@ function get_queen_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
@@ -481,7 +510,7 @@ function get_queen_moves(start, array) {
 
 function check_valid(target){// can you play that?
     const target_square = event.target.closest('.square');
-    const target_id = target_square ? Number(target_square.getAttribute('square_id')) : null;
+    const target_id = target_square ? Number(target_square.getAttribute(`${turn}_square_id`)) : null;
     const start_id = Number(start_pos_id);
     const piece = dragged_element.id;
     const can_drop = !target_square.firstChild || opp_taken; //no more friendly fire haah
@@ -545,4 +574,3 @@ function check_valid(target){// can you play that?
     
 }
 
-change_ids();
