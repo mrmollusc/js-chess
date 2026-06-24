@@ -19,6 +19,8 @@ A chess player without the cool moves and checking.
 
 23/06 - welp I need to actually finish something for the hours to count, finished coding check detection, now need to apply it and make a check flag.
 
+24/06 - Good progress, it can detect when a king is in check.
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
