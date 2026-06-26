@@ -12,6 +12,7 @@ var king_moves = [];
 var bishop_moves = [];
 var queen_moves = [];
 var new_attacked_squares = [];
+var new_enemy_attacked_squares = [];
 player_turn.textContent = 'white';
 //pieces
 
@@ -103,45 +104,64 @@ function drag_drop(e){//detects drop of drag...
     e.stopPropagation();  
     const target_square = e.target.closest('.square');
     if (!target_square) return;
+    const start_square = document.querySelector(`[${turn}_square_id="${start_pos_id}"]`);
     const your_turn = dragged_element.firstChild.classList.contains(turn);
     const opp_turn = turn === 'white' ? 'black' : 'white';
     opp_taken = e.target.classList.contains(opp_turn);
-    const valid = check_valid(e.target)
 
-    const your_king = document.querySelector(`#king .${turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
-    const their_king = document.querySelector(`#king .${opp_turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
-    console.log(your_king,their_king)
+    const valid = check_valid(e.target)    
+    var your_king = document.querySelector(`#king .${turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    var their_king = document.querySelector(`#king .${opp_turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    
+    function is_in_check(){
+        attacked_squares(turn);
+        const their_king = document.querySelector(`#king .${opp_turn}`)?.parentElement.parentElement.getAttribute(`${turn}_square_id`);
+        if (their_king && new_attacked_squares.includes(Number(their_king))){
+            console.warn('check');
+        }
+    }
 
-    if(your_turn && valid){
+    function is_illegal(){
+        const your_king = document.querySelector(`#king .${turn}`)?.parentElement.parentElement.getAttribute(`${opp_turn}_square_id`);
+        enemy_attacked_squares(opp_turn);
+        const illegal = your_king && new_enemy_attacked_squares.includes(Number(your_king));
+        if (illegal) {
+            console.warn('illegal move');
+        }
+        return illegal;
+    }
 
-        if(opp_taken){ //if regular capture
+    if(valid && your_turn){ //if regular capture
+        if(opp_taken){
             const existing_piece = target_square.querySelector('.piece');
-            target_square.append(dragged_element);
-            console.log(e.target)
-            existing_piece.remove(); //kept leaving ghost pieces with no img child, this is the fix
+            target_square.append(dragged_element); //kept leaving ghost pieces with no img child, this is the fix
+            existing_piece.remove();
             document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-            attacked_squares(turn);
-            
-            if(new_attacked_squares.includes(Number(their_king))){
-                console.log(new_attacked_squares,your_king)
+            console.log(new_attacked_squares);
+            is_in_check();
+            if (is_illegal()) {
+                start_square.append(dragged_element);
+                if (existing_piece) target_square.append(existing_piece);
+                return;
             }
-            
             change_turn();
             return;
         }
 
-        e.target.append(dragged_element); 
+        target_square.append(dragged_element); //kept leaving ghost pieces with no img child, this is the fix
         document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-        attacked_squares(turn);
-        
-        if(new_attacked_squares.includes(Number(their_king))){
-                console.log('check!')
+        console.log(new_attacked_squares);
+        is_in_check();
+        if (is_illegal()) {
+            start_square.append(dragged_element);
+            return;
         }
         change_turn();
-        return;
-        
-        }
+        return;        
+    }    
 }
+
+
 
 function attacked_squares(col){
     var attacked_squares = [];
@@ -179,6 +199,42 @@ function attacked_squares(col){
     new_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
     console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
+function enemy_attacked_squares(col){
+    var attacked_squares = [];
+    all_squares.forEach((square, i) => {   
+
+        let correct_square = document.querySelector(`[${col}_square_id="${i}"]`);
+        if (!correct_square) return;
+
+        const piece = correct_square.querySelector('.piece');
+        const img = piece?.querySelector('img');
+
+        if (img && img.getAttribute('class') === col) {
+            const piece_type = piece.getAttribute('id');
+            
+            if (piece_type == 'pawn') {
+                get_virtual_pawn_attacks(i, attacked_squares, col);//only the diagonal movements count as threatning attacks (ie give check)
+            }
+            else if (piece_type == 'knight') {
+                get_knight_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'bishop') {
+                get_bishop_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'rook') {
+                get_rook_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'king') {
+                get_king_moves(i, attacked_squares, col);
+            }
+            else if (piece_type == 'queen') {
+                get_queen_moves(i, attacked_squares, col);
+            }
+        }
+    });
+    new_enemy_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
+    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
+}
 
 window.addEventListener("keydown",(e)=>{
     if(event.repeat){
@@ -186,9 +242,17 @@ window.addEventListener("keydown",(e)=>{
         }
         if(e.key === 'l'){
             const attacking_colour = (turn === 'white') ? 'black' : 'white';
+            attacked_squares(attacking_colour);
             new_attacked_squares.forEach((a)=>{
                 const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
-                console.log(turn)
+                marked.classList.add('attack-highlight');
+            })
+        }
+        if(e.key === 'k'){
+            const attacking_colour = (turn === 'white') ? 'white' : 'black';
+            enemy_attacked_squares(attacking_colour);
+            new_enemy_attacked_squares.forEach((a)=>{
+                const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
                 marked.classList.add('attack-highlight');
             })
         }
@@ -201,7 +265,13 @@ window.addEventListener("keyup",(e)=>{
             const attacking_colour = (turn === 'white') ? 'black' : 'white';
             new_attacked_squares.forEach((a)=>{
                 const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
-                console.log(turn)
+                marked.classList.remove('attack-highlight');
+            })
+        }
+        if(e.key === 'k'){
+            const attacking_colour = (turn === 'white') ? 'white' : 'black';
+            new_enemy_attacked_squares.forEach((a)=>{
+                const marked = document.querySelector(`[${attacking_colour}_square_id="${a}"]`);
                 marked.classList.remove('attack-highlight');
             })
         }
@@ -219,7 +289,7 @@ function change_turn(){ //changes turn no sh       utdown
     
 }   
 
-function get_virtual_pawn_attacks(start, array) { 
+function get_virtual_pawn_attacks(start, array, col = turn) { 
             const directions = [
                 { offset: 9,  type: 'dl'  },
                 { offset: 7, type: 'dr'  }
@@ -227,7 +297,7 @@ function get_virtual_pawn_attacks(start, array) {
 
             directions.forEach(dir => {
                     let legal_id = start + dir.offset;
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     const pieceOnSquare = square ? square.querySelector('#pawn, #queen, #king, #rook, #knight, #bishop') : null;
                         
                     const column_diff = legal_id % 8 - start % 8;
@@ -239,7 +309,7 @@ function get_virtual_pawn_attacks(start, array) {
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
                         
-                        if (piece_colour == turn) { 
+                        if (piece_colour == col) { 
                             return;
                         }
                         array.push(legal_id);
@@ -249,7 +319,7 @@ function get_virtual_pawn_attacks(start, array) {
             });
 }
 
-function get_pawn_attacks(start, array) { 
+function get_pawn_attacks(start, array, col = turn) { 
             const directions = [
                 { offset: 9,  type: 'dl'  },
                 { offset: 7, type: 'dr'  }
@@ -258,7 +328,7 @@ function get_pawn_attacks(start, array) {
             directions.forEach(dir => {
                 for (let i = 1; i < 2; i++) { 
                     let legal_id = start + dir.offset * i;
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                         
                     const column_diff = legal_id % 8 - start % 8;
@@ -270,7 +340,7 @@ function get_pawn_attacks(start, array) {
 
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour == turn) { 
+                        if (piece_colour == col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -281,7 +351,7 @@ function get_pawn_attacks(start, array) {
             });
 }
 
-function get_pawn_moves(start, array) { 
+function get_pawn_moves(start, array, col = turn) { 
             const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -291,8 +361,8 @@ function get_pawn_moves(start, array) {
             directions.forEach(dir => {
                 for (let i = 1; i < 2; i++) { 
                     let legal_id = start + dir.offset * i;
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
-                    let block_piece = document.querySelector(`[${turn}_square_id="${legal_id-8}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
+                    let block_piece = document.querySelector(`[${col}_square_id="${legal_id-8}"]`);
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     const pieceOnSquarebefore = block_piece ? block_piece.querySelector('.piece') : null;
                         
@@ -306,7 +376,7 @@ function get_pawn_moves(start, array) {
 
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour == turn) { 
+                        if (piece_colour == col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -317,7 +387,7 @@ function get_pawn_moves(start, array) {
             });
 }  
     
-function get_knight_moves(start, array) {
+function get_knight_moves(start, array, col = turn) {
     start = Number(start); 
             const directions = [
                 { offset: 17,  type: 'u2l1'  },
@@ -344,12 +414,12 @@ function get_knight_moves(start, array) {
                     if (dir.type === 'd1r2' && column_diff != -2) break;
                     if (dir.type === 'd1l2' && column_diff != 2) break;
 
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === turn) { 
+                        if (piece_colour === col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -360,7 +430,7 @@ function get_knight_moves(start, array) {
             });
 }
     
-function get_king_moves(start, array) {
+function get_king_moves(start, array, col = turn) {
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -383,13 +453,13 @@ function get_king_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === turn) { 
+                        if (piece_colour === col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -400,7 +470,7 @@ function get_king_moves(start, array) {
             });
 }  
     
-function get_bishop_moves(start, array) {
+function get_bishop_moves(start, array, col = turn) {
     start = Number(start); 
             const directions = [
                 { offset: 9,  type: 'dr' },
@@ -418,13 +488,13 @@ function get_bishop_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === turn) { 
+                        if (piece_colour === col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -435,7 +505,7 @@ function get_bishop_moves(start, array) {
             });
 }
 
-function get_rook_moves(start, array) {
+function get_rook_moves(start, array, col = turn) {
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -450,13 +520,13 @@ function get_rook_moves(start, array) {
                     if (legal_id < 0 || legal_id > 63) break;
                     if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
 
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === turn) { 
+                        if (piece_colour === col) { 
                             break;
                         }
                         array.push(legal_id);
@@ -467,7 +537,7 @@ function get_rook_moves(start, array) {
             });
 }
     
-function get_queen_moves(start, array) {    
+function get_queen_moves(start, array, col = turn) {    
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -490,13 +560,13 @@ function get_queen_moves(start, array) {
                     if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
                     if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[${turn}_square_id="${legal_id}"]`);
+                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
                     if (!square) break;
 
                     const pieceOnSquare = square ? square.querySelector('.piece') : null;
                     if (pieceOnSquare) {
                         let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === turn) { 
+                        if (piece_colour === col) { 
                             break;
                         }
                         array.push(legal_id);
