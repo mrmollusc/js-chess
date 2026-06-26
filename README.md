@@ -21,6 +21,8 @@ A chess player without the cool moves and checking.
 
 24/06 - Good progress, it can detect when a king is in check.
 
+26/06 - DETECTS CHECK AND ILLEGAL MOVES!!! Added support for chromium browsers (drag and drop was being E), sigma firefox is the best test.
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
