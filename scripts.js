@@ -18,20 +18,20 @@ player_turn.textContent = 'white';
 
 
 //white
-const w_king = '<div class="piece" id="king"><img src="wk.png"></div>';
-const w_queen = '<div class="piece" id="queen"><img src="wq.png"></div>';
-const w_bishop = '<div class="piece" id="bishop"><img src="wb.png"></div>';
-const w_knight = '<div class="piece" id="knight"><img src="wn.png"></div>';
-const w_rook = '<div class="piece" id="rook"><img src="wr.png"></div>';
-const w_pawn = '<div class="piece" id="pawn"><img src="wp.png"></div>';
+const w_king = '<div class="piece" id="king" draggable="true"><img src="wk.png" draggable="false"></div>';
+const w_queen = '<div class="piece" id="queen" draggable="true"><img src="wq.png" draggable="false"></div>';
+const w_bishop = '<div class="piece" id="bishop" draggable="true"><img src="wb.png" draggable="false"></div>';
+const w_knight = '<div class="piece" id="knight" draggable="true"><img src="wn.png" draggable="false"></div>';
+const w_rook = '<div class="piece" id="rook" draggable="true"><img src="wr.png" draggable="false"></div>';
+const w_pawn = '<div class="piece" id="pawn" draggable="true"><img src="wp.png" draggable="false"></div>';
 
 //black
-const b_king = '<div class="piece" id="king"><img src="bk.png"></div>';
-const b_queen = '<div class="piece" id="queen"><img src="bq.png"></div>';
-const b_bishop = '<div class="piece" id="bishop"><img src="bb.png"></div>';
-const b_knight = '<div class="piece" id="knight"><img src="bn.png"></div>';
-const b_rook = '<div class="piece" id="rook"><img src="br.png"></div>';
-const b_pawn = '<div class="piece" id="pawn"><img src="bp.png"></div>';
+const b_king = '<div class="piece" id="king" draggable="true"><img src="bk.png" draggable="false"></div>';
+const b_queen = '<div class="piece" id="queen" draggable="true"><img src="bq.png" draggable="false"></div>';
+const b_bishop = '<div class="piece" id="bishop" draggable="true"><img src="bb.png" draggable="false"></div>';
+const b_knight = '<div class="piece" id="knight" draggable="true"><img src="bn.png" draggable="false"></div>';
+const b_rook = '<div class="piece" id="rook" draggable="true"><img src="br.png" draggable="false"></div>';
+const b_pawn = '<div class="piece" id="pawn" draggable="true"><img src="bp.png" draggable="false"></div>';
 
 const start_board = [
     b_rook, b_knight, b_bishop, b_queen, b_king, b_bishop, b_knight, b_rook,
@@ -55,7 +55,12 @@ function create_board() {
         const square = document.createElement('div');
         square.classList.add('square');
         square.innerHTML = index;
-        square.firstChild && square.firstChild.setAttribute('draggable', true);
+        const piece = square.querySelector('.piece');
+        if (piece) {
+            piece.setAttribute('draggable', true);
+            const image = piece.querySelector('img');
+            if (image) image.setAttribute('draggable', false);
+        }
         square.setAttribute('white_square_id', 63-i);
         square.setAttribute('black_square_id', i);
         const row = Math.floor((63-i)/8) + 1;
@@ -91,9 +96,22 @@ all_squares.forEach((square, i) => {//listens for dragging events
     }
 })
 
-function drag_start(e){ //measures where you dragged from
-    start_pos_id = e.currentTarget.getAttribute(`${turn}_square_id`); // fix for vid
-    dragged_element = e.target.parentNode;
+//measures where you dragged from, also stupid CHROMIUM blocks drag-drop by default
+function drag_start(e) {
+    const piece = e.target.closest('.piece');
+    if (!piece) return;
+
+    const square = piece.closest('.square');
+    if (!square) return;
+
+    start_pos_id = square.getAttribute(`${turn}_square_id`);
+    dragged_element = piece;
+
+    if (e.dataTransfer) {
+        e.dataTransfer.setData('text/plain', start_pos_id);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setDragImage(piece, piece.offsetWidth / 2, piece.offsetHeight / 2);
+    }
 }
 
 function drag_over(e){// uh idk
@@ -101,15 +119,17 @@ function drag_over(e){// uh idk
 }
 
 function drag_drop(e){//detects drop of drag...
+    e.preventDefault();
     e.stopPropagation();  
     const target_square = e.target.closest('.square');
     if (!target_square) return;
     const start_square = document.querySelector(`[${turn}_square_id="${start_pos_id}"]`);
     const your_turn = dragged_element.firstChild.classList.contains(turn);
     const opp_turn = turn === 'white' ? 'black' : 'white';
-    opp_taken = e.target.classList.contains(opp_turn);
+    const existing_piece = target_square.querySelector('.piece');
+    opp_taken = existing_piece?.querySelector('img')?.classList.contains(opp_turn) || false;
 
-    const valid = check_valid(e.target)    
+    const valid = check_valid(e.target)
     var your_king = document.querySelector(`#king .${turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
     var their_king = document.querySelector(`#king .${opp_turn}`).parentElement.parentElement.getAttribute(`${turn}_square_id`);
     
@@ -132,10 +152,12 @@ function drag_drop(e){//detects drop of drag...
     }
 
     if(valid && your_turn){ //if regular capture
-        if(opp_taken){
+        if (opp_taken) {
             const existing_piece = target_square.querySelector('.piece');
+            if (existing_piece) {
+                existing_piece.remove();
+            }
             target_square.append(dragged_element); //kept leaving ghost pieces with no img child, this is the fix
-            existing_piece.remove();
             document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
             console.log(new_attacked_squares);
             is_in_check();
@@ -163,7 +185,7 @@ function drag_drop(e){//detects drop of drag...
 
 
 
-function attacked_squares(col){
+function attacked_squares(col){//yes
     var attacked_squares = [];
     all_squares.forEach((square, i) => {   
 
@@ -199,7 +221,7 @@ function attacked_squares(col){
     new_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
     console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
-function enemy_attacked_squares(col){
+function enemy_attacked_squares(col){// a function so weird i wrote it twice
     var attacked_squares = [];
     all_squares.forEach((square, i) => {   
 
@@ -236,7 +258,7 @@ function enemy_attacked_squares(col){
     console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
 
-window.addEventListener("keydown",(e)=>{
+window.addEventListener("keydown",(e)=>{//this was annoying
     if(event.repeat){
             return;
         }
