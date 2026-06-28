@@ -23,6 +23,8 @@ A chess player without the cool moves and checking.
 
 26/06 - DETECTS CHECK AND ILLEGAL MOVES!!! Added support for chromium browsers (drag and drop was being E), sigma firefox is the best test.
 
+28/06 - added gameover square highlights: green for the winner, red for the loser and grey/gray for a draw :).
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
