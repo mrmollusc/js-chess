@@ -47,3 +47,13 @@
 .square.navy.attack-highlight {
     background-color: rgba(220, 50, 35, 0.6); 
 }
+
+.square.checkmate {
+    background-color: rgba(255, 0, 0, 0.45); 
+}
+.square.checkmater {
+    background-color: rgba(0, 255, 0, 0.45); 
+}
+.square.stalemate {
+    background-color: rgba(127, 127, 127, 0.45);
+}

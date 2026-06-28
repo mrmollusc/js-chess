@@ -138,7 +138,9 @@ function drag_drop(e){//detects drop of drag...
         const their_king = document.querySelector(`#king .${opp_turn}`)?.parentElement.parentElement.getAttribute(`${turn}_square_id`);
         if (their_king && new_attacked_squares.includes(Number(their_king))){
             console.warn('check');
+            return true;
         }
+        return false;
     }
 
     function is_illegal(){
@@ -159,7 +161,6 @@ function drag_drop(e){//detects drop of drag...
             }
             target_square.append(dragged_element); //kept leaving ghost pieces with no img child, this is the fix
             document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-            console.log(new_attacked_squares);
             is_in_check();
             if (is_illegal()) {
                 start_square.append(dragged_element);
@@ -167,25 +168,42 @@ function drag_drop(e){//detects drop of drag...
                 return;
             }
             change_turn();
+            if (check_for_checkmate(opp_turn)==2) {
+                document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
+                document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
+            }
+            else if (check_for_checkmate(opp_turn)==1) {
+                document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
+                document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
+            }
             return;
         }
 
         target_square.append(dragged_element); //kept leaving ghost pieces with no img child, this is the fix
         document.querySelectorAll('.piece:not(:has(img))').forEach(ghost => ghost.remove());
-        console.log(new_attacked_squares);
         is_in_check();
         if (is_illegal()) {
             start_square.append(dragged_element);
             return;
         }
+        
         change_turn();
+        if (check_for_checkmate(opp_turn)==2) {
+                document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
+                document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
+            }
+            else if (check_for_checkmate(opp_turn)==1) {
+                document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
+                document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
+            }
         return;        
     }    
 }
 
 
 
-function attacked_squares(col){//yes
+function attacked_squares(col){//cycles through all the piece attack functions to find the attacked squares
+    //my friend @vincentchen18 said to instead check from a king's positions the rook, bishop and knight moves away, but this is more naive and simple.
     var attacked_squares = [];
     all_squares.forEach((square, i) => {   
 
@@ -219,7 +237,6 @@ function attacked_squares(col){//yes
         }
     });
     new_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
-    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
 function enemy_attacked_squares(col){// a function so weird i wrote it twice
     var attacked_squares = [];
@@ -235,7 +252,7 @@ function enemy_attacked_squares(col){// a function so weird i wrote it twice
             const piece_type = piece.getAttribute('id');
             
             if (piece_type == 'pawn') {
-                get_virtual_pawn_attacks(i, attacked_squares, col);//only the diagonal movements count as threatning attacks (ie give check)
+                get_virtual_pawn_attacks(i, attacked_squares, col);
             }
             else if (piece_type == 'knight') {
                 get_knight_moves(i, attacked_squares, col);
@@ -255,8 +272,69 @@ function enemy_attacked_squares(col){// a function so weird i wrote it twice
         }
     });
     new_enemy_attacked_squares = [...new Set(attacked_squares)].sort((a, b) => a - b);
-    console.log([...new Set(attacked_squares)].sort((a, b) => a - b));  
 }
+
+function check_for_checkmate(defending_turn) {
+    const opp_turn = turn === 'white' ? 'black' : 'white';
+    let has_legal_move = false;
+    enemy_attacked_squares(opp_turn);
+    const their_king = document.querySelector(`#king .${turn}`)?.parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    
+    const is_currently_in_check = their_king && new_enemy_attacked_squares.includes(Number(their_king));
+
+    for (let i = 0; i < 64; i++) {
+        let current_square = document.querySelector(`[${defending_turn}_square_id="${i}"]`);
+        if (!current_square) continue;
+
+        const piece = current_square.querySelector('.piece');
+        const img = piece?.querySelector('img');
+
+        if (img && img.getAttribute('class') === defending_turn) {
+            const piece_type = piece.getAttribute('id');
+            let moves = [];
+
+            if (piece_type == 'pawn')   get_pawn_moves(i, moves, defending_turn);  
+            if (piece_type == 'knight') get_knight_moves(i, moves, defending_turn);
+            if (piece_type == 'bishop') get_bishop_moves(i, moves, defending_turn);
+            if (piece_type == 'rook')   get_rook_moves(i, moves, defending_turn);
+            if (piece_type == 'king')   get_king_moves(i, moves, defending_turn);
+            if (piece_type == 'queen')  get_queen_moves(i, moves, defending_turn);
+
+            for (const target_id of moves) {
+                let target_square = document.querySelector(`[${defending_turn}_square_id="${target_id}"]`);
+                if (!target_square) continue;
+
+                const target_piece = target_square.querySelector('.piece');
+
+                target_square.append(piece);
+                if (target_piece) target_piece.remove();
+
+                enemy_attacked_squares(opp_turn);
+                const new_king_pos = document.querySelector(`#king .${defending_turn}`)?.parentElement.parentElement.getAttribute(`${opp_turn}_square_id`);
+                const still_in_check = new_king_pos && new_enemy_attacked_squares.includes(Number(new_king_pos));
+
+                current_square.append(piece);
+                if (target_piece) {
+                    target_square.append(target_piece);
+                }
+                if (!still_in_check) {
+                    has_legal_move = true;
+                    break; 
+                }
+            }
+        }
+        if (has_legal_move) break;
+    }
+    if (!is_currently_in_check && !has_legal_move) {
+        console.log('stalemate');
+        return 1;
+    }
+    if(is_currently_in_check && !has_legal_move){
+    console.warn('checkmate');
+    return 2;
+    }
+}
+
 
 window.addEventListener("keydown",(e)=>{//this was annoying
     if(event.repeat){
@@ -311,7 +389,7 @@ function change_turn(){ //changes turn no sh       utdown
     
 }   
 
-function get_virtual_pawn_attacks(start, array, col = turn) { 
+function get_virtual_pawn_attacks(start, array, col = turn) { //its like get_pawn_attacks but it also looks at unoccupied squares (threats)
             const directions = [
                 { offset: 9,  type: 'dl'  },
                 { offset: 7, type: 'dr'  }
@@ -341,7 +419,7 @@ function get_virtual_pawn_attacks(start, array, col = turn) {
             });
 }
 
-function get_pawn_attacks(start, array, col = turn) { 
+function get_pawn_attacks(start, array, col = turn) { //different from above, used for checking if a pawn can capture an enemy piece
             const directions = [
                 { offset: 9,  type: 'dl'  },
                 { offset: 7, type: 'dr'  }
@@ -373,7 +451,7 @@ function get_pawn_attacks(start, array, col = turn) {
             });
 }
 
-function get_pawn_moves(start, array, col = turn) { 
+function get_pawn_moves(start, array, col = turn) { //non threatning pawn moves, only forward movement
             const pawn_start_row = [8, 9, 10, 11, 12, 13, 14, 15];
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -409,7 +487,7 @@ function get_pawn_moves(start, array, col = turn) {
             });
 }  
     
-function get_knight_moves(start, array, col = turn) {
+function get_knight_moves(start, array, col = turn) {//simple case
     start = Number(start); 
             const directions = [
                 { offset: 17,  type: 'u2l1'  },
@@ -452,7 +530,7 @@ function get_knight_moves(start, array, col = turn) {
             });
 }
     
-function get_king_moves(start, array, col = turn) {
+function get_king_moves(start, array, col = turn) {//REALLY SIMPLE
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -465,34 +543,34 @@ function get_king_moves(start, array, col = turn) {
                 { offset: -9, type: 'ul' } 
             ];
 
-            directions.forEach(dir => {
-                for (let i = 1; i < 2; i++) { 
-                    let legal_id = start + dir.offset * i;
-                    if (legal_id < 0 || legal_id > 63) break;
-                    if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
-                    if (dir.type === 'dr' && (legal_id % 8 <= start % 8)) break;
-                    if (dir.type === 'dl' && (legal_id % 8 >= start % 8)) break;
-                    if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
-                    if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
+        directions.forEach(dir => {
+            for (let i = 1; i < 2; i++) { 
+                let legal_id = start + dir.offset * i;
+                if (legal_id < 0 || legal_id > 63) break;
+                if (dir.type === 'h'  && Math.floor(start / 8) !== Math.floor(legal_id / 8)) break;
+                if (dir.type === 'dr' && (legal_id % 8 <= start % 8)) break;
+                if (dir.type === 'dl' && (legal_id % 8 >= start % 8)) break;
+                if (dir.type === 'ur' && (legal_id % 8 <= start % 8)) break;
+                if (dir.type === 'ul' && (legal_id % 8 >= start % 8)) break;
 
-                    let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
-                    if (!square) break;
+                let square = document.querySelector(`[${col}_square_id="${legal_id}"]`);
+                if (!square) break;
 
-                    const pieceOnSquare = square ? square.querySelector('.piece') : null;
-                    if (pieceOnSquare) {
-                        let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
-                        if (piece_colour === col) { 
-                            break;
-                        }
-                        array.push(legal_id);
+                const pieceOnSquare = square ? square.querySelector('.piece') : null;
+                if (pieceOnSquare) {
+                    let piece_colour = pieceOnSquare.querySelector('img')?.getAttribute('class');
+                    if (piece_colour === col) { 
                         break;
                     }
                     array.push(legal_id);
+                    break;
                 }
-            });
+                array.push(legal_id);
+            }
+        });
 }  
     
-function get_bishop_moves(start, array, col = turn) {
+function get_bishop_moves(start, array, col = turn) {//the first one i implemented, see queen and rook
     start = Number(start); 
             const directions = [
                 { offset: 9,  type: 'dr' },
@@ -527,7 +605,7 @@ function get_bishop_moves(start, array, col = turn) {
             });
 }
 
-function get_rook_moves(start, array, col = turn) {
+function get_rook_moves(start, array, col = turn) {//like bishop but less confusing
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
@@ -559,7 +637,7 @@ function get_rook_moves(start, array, col = turn) {
             });
 }
     
-function get_queen_moves(start, array, col = turn) {    
+function get_queen_moves(start, array, col = turn) {//rook + bishop go brr
     start = Number(start); 
             const directions = [
                 { offset: 8,  type: 'v'  },
