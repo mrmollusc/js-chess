@@ -1,5 +1,5 @@
 # mrmollusc's jschess
-A chess player without the cool moves and checking.
+A chess player without the cool moves (for nowever)
 
 6/06 - Started Project, followed a tutorial.
 
@@ -25,16 +25,20 @@ A chess player without the cool moves and checking.
 
 28/06 - added gameover square highlights: green for the winner, red for the loser and grey/gray for a draw :).
 
+29/06 Finalised shipping, if I get the chance I will work on en passant, castling and advanced draws (50 move, 3 fold)
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
-# LINKS
+# CREDITS
 
 js chess tutorial -  https://www.youtube.com/watch?v=Qv0fvm5B0EM
 
 cracked c# user: @irekit
 
 cracked python user: @vincentchen18
+
+Pieces from public chess.com assets.
 
 
 rip mrmollusc
