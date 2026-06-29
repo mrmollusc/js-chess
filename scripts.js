@@ -282,9 +282,10 @@ function check_for_checkmate(defending_turn) {
     const opp_turn = turn === 'white' ? 'black' : 'white';
     let has_legal_move = false;
     enemy_attacked_squares(opp_turn);
-    const their_king = document.querySelector(`#king .${turn}`)?.parentElement.parentElement.getAttribute(`${turn}_square_id`);
+    const their_king = document.querySelector(`#king .${defending_turn}`)?.parentElement.parentElement.getAttribute(`${opp_turn}_square_id`);
     
     const is_currently_in_check = their_king && new_enemy_attacked_squares.includes(Number(their_king));
+    console.log(their_king, new_enemy_attacked_squares);
 
     for (let i = 0; i < 64; i++) {
         let current_square = document.querySelector(`[${defending_turn}_square_id="${i}"]`);
