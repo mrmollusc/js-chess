@@ -171,10 +171,12 @@ function drag_drop(e){//detects drop of drag...
             if (check_for_checkmate(opp_turn)==2) {
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
+                info.textContent = `It is a draw!`;
             }
             else if (check_for_checkmate(opp_turn)==1) {
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
+                info.textContent = `${turn == 'white' ? 'black' : 'white'} is the winner!`;
             }
             return;
         }
@@ -191,10 +193,12 @@ function drag_drop(e){//detects drop of drag...
         if (check_for_checkmate(opp_turn)==2) {
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
+                info.textContent = `${turn == 'white' ? 'black' : 'white'} is the winner!`;
             }
             else if (check_for_checkmate(opp_turn)==1) {
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
+                info.textContent = `It is a draw!`;
             }
         return;        
     }    

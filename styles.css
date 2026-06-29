@@ -6,10 +6,10 @@
     flex-wrap: wrap;
 }
 #info{
-    color: black;
     position: absolute;
-    top: 1225px;
-    left: 346px;
+    font: 125px 'Mozilla Text';
+    left: 25px;
+    top: 700px;
 }
 .square{
     height: 100px;
