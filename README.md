@@ -27,6 +27,8 @@ A chess player without the cool moves (for nowever)
 
 29/06 Finalised shipping, if I get the chance I will work on en passant, castling and advanced draws (50 move, 3 fold)
 
+1/07 - welcome to july my friends, flipped a checkmate/stalemate flag
+
 # AI USE STATEMENT
 Some AI was involved in the creation, however all major blocks of codes are either entirely human/ from the tutorial/ or refined. However, the majority of the code, such as bug-fixes, adding ACTUAL PIECE MOVEMENT and syntax are human.
 
