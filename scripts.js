@@ -168,12 +168,14 @@ function drag_drop(e){//detects drop of drag...
                 return;
             }
             change_turn();
-            if (check_for_checkmate(opp_turn)==2) {
+            if (check_for_checkmate(opp_turn)==1) {
+                console.log('stalemate');
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
                 info.textContent = `It is a draw!`;
             }
-            else if (check_for_checkmate(opp_turn)==1) {
+            else if (check_for_checkmate(opp_turn)==2) {
+                console.log('checkmate');
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
                 info.textContent = `${turn == 'white' ? 'black' : 'white'} is the winner!`;
@@ -191,11 +193,13 @@ function drag_drop(e){//detects drop of drag...
         
         change_turn();
         if (check_for_checkmate(opp_turn)==2) {
+            console.log('checkmate');
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('checkmate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('checkmater');
                 info.textContent = `${turn == 'white' ? 'black' : 'white'} is the winner!`;
             }
             else if (check_for_checkmate(opp_turn)==1) {
+                console.log('stalemate');
                 document.querySelector(`#king .${turn}`).parentElement.parentElement.classList.add('stalemate');
                 document.querySelector(`#king .${turn == 'white' ? 'black' : 'white'}`).parentElement.parentElement.classList.add('stalemate');
                 info.textContent = `It is a draw!`;
@@ -331,11 +335,9 @@ function check_for_checkmate(defending_turn) {
         if (has_legal_move) break;
     }
     if (!is_currently_in_check && !has_legal_move) {
-        console.log('stalemate');
         return 1;
     }
     if(is_currently_in_check && !has_legal_move){
-    console.warn('checkmate');
     return 2;
     }
 }
